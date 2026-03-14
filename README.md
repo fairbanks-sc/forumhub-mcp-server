@@ -4,58 +4,32 @@ MCP server that gives Claude read-only access to both the **Silverchair Platform
 
 ## Quick Setup
 
-**Prerequisites:** Node.js 18+ and Git must be installed on your machine.
+> **Silverchair colleagues:** Head to the [Confluence setup guide](https://confluence.silverchair.com/spaces/~jfairbanks/pages/472325618) for the fastest path — it has a copy-paste prompt that does everything for you.
 
-### Option 1: Let Claude Do It (Recommended)
+### Prerequisites
 
-Open Claude Desktop and paste this prompt:
+- **Node.js 18+** — [Download here](https://nodejs.org) if not already installed
+- **Claude Desktop** (Cowork or Chat mode)
+- **WordPress Application Password** — credentials are on the [Confluence setup guide](https://confluence.silverchair.com/spaces/~jfairbanks/pages/472325618)
 
-```
-I need you to add the ForumHub MCP server to my Claude Desktop config. Here's what to do:
+### Add to Claude Desktop
 
-1. Open my Claude Desktop config file at %APPDATA%\Claude\claude_desktop_config.json
-2. Back it up first (copy to claude_desktop_config.json.bak in the same folder)
-3. Add this entry inside the "mcpServers" object:
-
-"forumhub": {
-  "command": "npx",
-  "args": ["-y", "github:fairbanks-sc/forumhub-mcp-server"],
-  "env": {
-    "WP_USERNAME": "silverchair.user",
-    "WP_APP_PASSWORD": "vZuU bIDD vIRw MYRz zAuP wvID"
-  }
-}
-
-Important rules:
-- Do NOT use PowerShell's ConvertFrom-Json/ConvertTo-Json to edit the file — it corrupts the encoding
-- Edit the raw JSON text directly (read as string, make targeted edit, write back)
-- Make sure there's a comma between this entry and any existing entries
-- After writing, validate the JSON parses correctly before confirming
-
-Then tell me to restart Claude Desktop.
-```
-
-After pasting that prompt, Claude will handle the config edit for you. Restart Claude Desktop when it tells you to, and you're done.
-
-### Option 2: Manual Setup
-
-1. Press `Win+R`, type `%APPDATA%\Claude`, and hit Enter
-2. Copy `claude_desktop_config.json` to `claude_desktop_config.json.bak` (backup!)
-3. Open `claude_desktop_config.json` in Notepad or VS Code
-4. Add this inside the `"mcpServers"` object (don't forget a comma after the previous entry):
+Add this entry inside the `"mcpServers"` object in your Claude Desktop config (`%APPDATA%\Claude\claude_desktop_config.json`):
 
 ```json
 "forumhub": {
   "command": "npx",
   "args": ["-y", "github:fairbanks-sc/forumhub-mcp-server"],
   "env": {
-    "WP_USERNAME": "silverchair.user",
-    "WP_APP_PASSWORD": "vZuU bIDD vIRw MYRz zAuP wvID"
+    "WP_USERNAME": "YOUR_WP_USERNAME",
+    "WP_APP_PASSWORD": "YOUR_WP_APP_PASSWORD"
   }
 }
 ```
 
-5. Save, fully quit Claude Desktop (system tray > Quit or Ctrl+Q), and reopen it
+Replace `YOUR_WP_USERNAME` and `YOUR_WP_APP_PASSWORD` with the credentials from the Confluence guide.
+
+Restart Claude Desktop (system tray > Quit or Ctrl+Q, then reopen).
 
 ### Verify It Works
 
@@ -66,7 +40,7 @@ If you see results, you're all set.
 
 ## What You Get
 
-Once connected, Claude has 8 tools for querying the Forum Hub:
+Once connected, Claude has 8 read-only tools for querying Forum Hub content:
 
 | Tool | What It Does |
 |------|-------------|
@@ -94,7 +68,6 @@ Both Forum Hubs live on the same WordPress instance. Filter between them using p
 | 401 Authentication errors | Check that `WP_USERNAME` and `WP_APP_PASSWORD` are correct. The password includes the spaces between groups. |
 | Server not appearing in Claude | Make sure you restarted Claude Desktop completely (Quit from system tray, not just close the window). |
 | npx hangs or times out | Check your internet connection. npx needs to pull the package from GitHub on first run. If behind a VPN, try disconnecting temporarily. |
-| "npm ERR! Could not resolve" | You need Git installed and GitHub access configured. Run `git ls-remote https://github.com/fairbanks-sc/forumhub-mcp-server` to test. |
 
 ## Key Content IDs
 
@@ -115,6 +88,17 @@ Both Forum Hubs live on the same WordPress instance. Filter between them using p
 | accessibility | 84 | 17 |
 | Platform Strategies | 72 | 24 |
 
+## Development
+
+```bash
+git clone https://github.com/fairbanks-sc/forumhub-mcp-server.git
+cd forumhub-mcp-server
+npm install
+npm run dev    # Watch mode with auto-reload
+npm run build  # Compile TypeScript to dist/
+npm start      # Run the compiled server
+```
+
 ## Questions?
 
-Reach out to John Fairbanks (jfairbanks@silverchair.com) for GitHub repo access or any setup issues.
+Reach out to John Fairbanks (jfairbanks@silverchair.com) for any setup issues.
