@@ -4,11 +4,15 @@
   "description": "MCP server for Silverchair Forum Hub WordPress REST API integration",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "forumhub-mcp-server": "dist/index.js"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepare": "npm run build"
   },
   "engines": {
     "node": ">=18"

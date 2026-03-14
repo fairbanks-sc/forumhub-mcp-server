@@ -1,10 +1,72 @@
 # Forum Hub MCP Server
 
-MCP server that gives Claude read-only access to both the **Silverchair Platform Forum Hub** and the **ScholarOne Manuscripts Forum Hub** via the WordPress REST API. This allows Claude to search posts, browse pages, pull release notes, and retrieve client-facing documentation directly from the Forum Hub.
+MCP server that gives Claude read-only access to both the **Silverchair Platform Forum Hub** and the **ScholarOne Manuscripts Forum Hub** via the WordPress REST API. Claude can search posts, browse pages, pull release notes, and retrieve client-facing documentation directly from the Forum Hub.
 
-## What This Does
+## Quick Setup
 
-Once connected, Claude gets 8 tools for querying the Forum Hub:
+**Prerequisites:** Node.js 18+ and Git must be installed on your machine.
+
+### Option 1: Let Claude Do It (Recommended)
+
+Open Claude Desktop and paste this prompt:
+
+```
+I need you to add the ForumHub MCP server to my Claude Desktop config. Here's what to do:
+
+1. Open my Claude Desktop config file at %APPDATA%\Claude\claude_desktop_config.json
+2. Back it up first (copy to claude_desktop_config.json.bak in the same folder)
+3. Add this entry inside the "mcpServers" object:
+
+"forumhub": {
+  "command": "npx",
+  "args": ["-y", "github:fairbanks-sc/forumhub-mcp-server"],
+  "env": {
+    "WP_USERNAME": "silverchair.user",
+    "WP_APP_PASSWORD": "vZuU bIDD vIRw MYRz zAuP wvID"
+  }
+}
+
+Important rules:
+- Do NOT use PowerShell's ConvertFrom-Json/ConvertTo-Json to edit the file — it corrupts the encoding
+- Edit the raw JSON text directly (read as string, make targeted edit, write back)
+- Make sure there's a comma between this entry and any existing entries
+- After writing, validate the JSON parses correctly before confirming
+
+Then tell me to restart Claude Desktop.
+```
+
+After pasting that prompt, Claude will handle the config edit for you. Restart Claude Desktop when it tells you to, and you're done.
+
+### Option 2: Manual Setup
+
+1. Press `Win+R`, type `%APPDATA%\Claude`, and hit Enter
+2. Copy `claude_desktop_config.json` to `claude_desktop_config.json.bak` (backup!)
+3. Open `claude_desktop_config.json` in Notepad or VS Code
+4. Add this inside the `"mcpServers"` object (don't forget a comma after the previous entry):
+
+```json
+"forumhub": {
+  "command": "npx",
+  "args": ["-y", "github:fairbanks-sc/forumhub-mcp-server"],
+  "env": {
+    "WP_USERNAME": "silverchair.user",
+    "WP_APP_PASSWORD": "vZuU bIDD vIRw MYRz zAuP wvID"
+  }
+}
+```
+
+5. Save, fully quit Claude Desktop (system tray > Quit or Ctrl+Q), and reopen it
+
+### Verify It Works
+
+Ask Claude:
+> "List the latest 5 posts from the Forum Hub"
+
+If you see results, you're all set.
+
+## What You Get
+
+Once connected, Claude has 8 tools for querying the Forum Hub:
 
 | Tool | What It Does |
 |------|-------------|
@@ -17,175 +79,42 @@ Once connected, Claude gets 8 tools for querying the Forum Hub:
 | `forumhub_list_tags` | List all content tags and their IDs |
 | `forumhub_search_content` | Search across all content types (posts + pages) |
 
-Both Forum Hubs live on the same WordPress instance. You distinguish between them by filtering on parent pages or categories:
+## Two Forum Hubs, One Server
+
+Both Forum Hubs live on the same WordPress instance. Filter between them using parent pages or categories:
 
 - **Silverchair Platform Forum Hub** — Parent page ID `3399` (`/clients/`)
 - **ScholarOne Forum Hub** — Content under category ID `288` and pages under `/s1m-clients/`
 
-## Prerequisites
-
-- **Node.js 18+** installed on your machine
-- **Git** installed
-- **Claude Desktop** (Cowork or Chat mode)
-- **WordPress Application Password** — contact Steph Lovegrove Hansen to get credentials for the `silverchair.user` account. She'll provide a username and an application password (a string of 6 space-separated 4-character groups like `xxxx xxxx xxxx xxxx xxxx xxxx`).
-
-## Setup (Step by Step)
-
-### 1. Clone the repo
-
-```powershell
-cd "C:\Users\YOUR_USERNAME\claude code"
-git clone https://github.com/fairbanks-sc/forumhub-mcp-server.git
-cd forumhub-mcp-server
-```
-
-> **Note:** If you get a "dubious ownership" error from Git, run:
-> ```powershell
-> git config --global --add safe.directory 'C:/Users/YOUR_USERNAME/claude code/forumhub-mcp-server'
-> ```
-
-### 2. Install dependencies and build
-
-```powershell
-npm install
-npm run build
-```
-
-This compiles the TypeScript source into `dist/index.js`, which is what Claude Desktop runs.
-
-### 3. Find your Claude Desktop config file
-
-The config file is at:
-```
-C:\Users\YOUR_USERNAME\AppData\Roaming\Claude\claude_desktop_config.json
-```
-
-You can open this folder quickly by pressing `Win+R` and typing:
-```
-%APPDATA%\Claude
-```
-
-### 4. Back up your config (important!)
-
-Before editing, **always** make a copy:
-```powershell
-copy claude_desktop_config.json claude_desktop_config.json.bak
-```
-
-### 5. Add the forumhub server to your config
-
-Open `claude_desktop_config.json` in a text editor (Notepad, VS Code, etc.) and add the `forumhub` entry inside the `"mcpServers"` object. Here's what the entry should look like:
-
-```json
-"forumhub": {
-  "command": "node",
-  "args": [
-    "C:\\Users\\YOUR_USERNAME\\claude code\\forumhub-mcp-server\\dist\\index.js"
-  ],
-  "env": {
-    "WP_USERNAME": "silverchair.user",
-    "WP_APP_PASSWORD": "YOUR_APP_PASSWORD_FROM_STEPH"
-  }
-}
-```
-
-**Important:**
-- Replace `YOUR_USERNAME` with your actual Windows username
-- Replace `YOUR_APP_PASSWORD_FROM_STEPH` with the application password Steph provided
-- Make sure you add a comma after the previous server entry if there are other servers already in the config
-- The backslashes in the path must be doubled (`\\`) since this is JSON
-
-**Example** — if your config already has other MCP servers, it might look like:
-```json
-{
-  "mcpServers": {
-    "confluence": { ... },
-    "jira": { ... },
-    "forumhub": {
-      "command": "node",
-      "args": [
-        "C:\\Users\\jdoe\\claude code\\forumhub-mcp-server\\dist\\index.js"
-      ],
-      "env": {
-        "WP_USERNAME": "silverchair.user",
-        "WP_APP_PASSWORD": "xxxx xxxx xxxx xxxx xxxx xxxx"
-      }
-    }
-  }
-}
-```
-
-### 6. Restart Claude Desktop
-
-Fully quit Claude Desktop (system tray → Quit, or Ctrl+Q) and reopen it. The forumhub tools will appear in your connector list.
-
-### 7. Verify it works
-
-In any Claude conversation, try asking:
-> "List the latest 5 posts from the Forum Hub"
-
-or:
-> "Search the Forum Hub for 'release notes'"
-
-If you see results, you're good to go.
-
 ## Troubleshooting
 
-**"Could not load app settings" error on Claude Desktop launch:**
-Your config JSON is malformed. Restore from backup (`claude_desktop_config.json.bak`) and try the edit again. Common issues: missing comma between server entries, unescaped backslashes in paths, or a trailing comma after the last entry.
+| Problem | Fix |
+|---------|-----|
+| "Could not load app settings" on Claude launch | Your config JSON is malformed. Restore from `.bak` backup and try again. Common issues: missing comma, unescaped backslashes, trailing comma. **Never use PowerShell's ConvertTo-Json** — it corrupts the file. |
+| 401 Authentication errors | Check that `WP_USERNAME` and `WP_APP_PASSWORD` are correct. The password includes the spaces between groups. |
+| Server not appearing in Claude | Make sure you restarted Claude Desktop completely (Quit from system tray, not just close the window). |
+| npx hangs or times out | Check your internet connection. npx needs to pull the package from GitHub on first run. If behind a VPN, try disconnecting temporarily. |
+| "npm ERR! Could not resolve" | You need Git installed and GitHub access configured. Run `git ls-remote https://github.com/fairbanks-sc/forumhub-mcp-server` to test. |
 
-> **Warning:** Do NOT use PowerShell's `ConvertFrom-Json | ConvertTo-Json` to edit the config file. PowerShell's JSON serialization introduces encoding issues that will corrupt the file. Always edit the raw text directly.
-
-**401 Authentication errors:**
-Check that `WP_USERNAME` and `WP_APP_PASSWORD` are correct in your config. The application password should include the spaces between groups.
-
-**Server not appearing in Claude Desktop:**
-Make sure the path in `args` points to the correct location of `dist/index.js` on your machine. The path must use double backslashes in JSON.
-
-**Tools return empty results:**
-The Forum Hub content is password-protected. Without valid credentials, you'll only see public content. Confirm your application password with Steph.
-
-## Authentication Modes
-
-The server auto-detects which auth to use based on environment variables:
-
-| Priority | Env Vars | Auth Method |
-|----------|----------|-------------|
-| 1 (preferred) | `WP_USERNAME` + `WP_APP_PASSWORD` | Basic Auth (Application Password) |
-| 2 (temporary) | `WP_COOKIE` | Cookie-based auth (expires) |
-| 3 (fallback) | Neither set | No auth (public content only) |
-
-Application Passwords are strongly preferred because they don't expire. Cookie auth requires manually updating the cookie value every time your WordPress session expires.
-
-## Key Content IDs for Reference
-
-These IDs are useful for filtering queries:
-
-### Forum Hub Parent Pages
-- **Silverchair Platform Forum Hub** — Page ID `3399` (parent of all platform client pages)
-- **ScholarOne Forum Hub** — Pages under `/s1m-clients/` path
+## Key Content IDs
 
 ### Useful Categories
-- **ScholarOne** — Category ID `288` (31 posts about S1M product updates, roadmap, etc.)
-- **Clients** — Category ID `88` (129 posts, general client-facing content)
-- **News** — Category ID `10` (173 posts, company and product news)
-- **Accessibility** — Category ID `67` (17 posts)
+| Category | ID | Posts |
+|----------|----|-------|
+| ScholarOne | 288 | 31 |
+| Clients | 88 | 129 |
+| News | 10 | 173 |
+| Accessibility | 67 | 17 |
 
 ### Useful Tags
-- **community** — Tag ID `76` (63 posts)
-- **clients** — Tag ID `104` (57 posts)
-- **events** — Tag ID `75` (37 posts)
-- **accessibility** — Tag ID `84` (17 posts)
-- **Platform Strategies** — Tag ID `72` (24 posts)
-
-## Development
-
-```bash
-npm run dev    # Watch mode with auto-reload (requires tsx)
-npm run build  # Compile TypeScript to dist/
-npm start      # Run the compiled server
-```
+| Tag | ID | Posts |
+|-----|----|-------|
+| community | 76 | 63 |
+| clients | 104 | 57 |
+| events | 75 | 37 |
+| accessibility | 84 | 17 |
+| Platform Strategies | 72 | 24 |
 
 ## Questions?
 
-Reach out to John Fairbanks (jfairbanks@silverchair.com) for repo access, or Steph Lovegrove Hansen for WordPress Application Password credentials.
+Reach out to John Fairbanks (jfairbanks@silverchair.com) for GitHub repo access or any setup issues.
